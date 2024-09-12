@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	default_key          = "default"
-	default_key_sarttime = "Start"
-	default_key_endtime  = "End"
+	default_key_identifier = "default"
+	default_key_sarttime   = "Start"
+	default_key_endtime    = "End"
 )
 
-var ask_func func(string, *Result, *option)
+var ask_func func(string, ISwitchItem, *Result, *Option_)
 
 type ISwitchItem interface {
-	IsOpen(acname string, opts ...*option) (r *Result)
+	IsOpen(acname string, opts ...*Option_) (r *Result)
 }
 
 type SwithItem struct {
@@ -43,7 +43,7 @@ func (this *SwithItem) String() string {
 	return fmt.Sprintf("%+v", *this)
 }
 
-func (this *SwithItem) IsOpen(acname string, opts ...*option) (r *Result) {
+func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	r = &Result{
 		Is: true,
 	}
@@ -54,12 +54,12 @@ func (this *SwithItem) IsOpen(acname string, opts ...*option) (r *Result) {
 	if r.Meta == nil {
 		r.Meta = map[string]any{}
 	}
-	opt := Option().Merge(opts...)
+	opt := Option().merges(opts...)
 
 	r.Is = this.Open
 	var now time.Time
-	if opt.Now != nil {
-		now = *opt.Now
+	if opt.now != nil {
+		now = *opt.now
 	} else {
 		now = time.Now()
 	}
@@ -75,17 +75,21 @@ func (this *SwithItem) IsOpen(acname string, opts ...*option) (r *Result) {
 		}
 	}
 
-	var pid int
-	if opt.Pid != nil {
-		pid = *opt.Pid
+	var pid, vip int
+	var pkg string
+	if opt.pid != nil {
+		pid = *opt.pid
+	}
+
+	if opt.vip != nil {
+		vip = *opt.vip
+	}
+	if opt.pkg != nil {
+		pkg = *opt.pkg
 	}
 
 	if r.Is && pid != 0 && len(this.Pids) > 0 {
 		r.Is = lo.Contains(this.Pids, pid)
-	}
-
-	if r.Is && opt.Vip != nil && len(this.Vips) > 0 {
-		r.Is = lo.Contains(this.Vips, *opt.Vip)
 	}
 
 	if r.Is && pid != 0 && len(this.PidTails) > 0 {
@@ -93,21 +97,25 @@ func (this *SwithItem) IsOpen(acname string, opts ...*option) (r *Result) {
 		r.Is = lo.Contains(this.PidTails, pidtail)
 	}
 
-	if r.Is && opt.Pkg != nil && len(this.Pkgs) > 0 {
-		r.Is = lo.Contains(this.Pkgs, *opt.Pkg)
+	if r.Is && len(this.Vips) > 0 {
+		r.Is = lo.Contains(this.Vips, vip)
 	}
 
-	if r.Is && ask_func != nil && opt.IsAsk != nil && *opt.IsAsk {
-		ask_func(acname, r, opt)
+	if r.Is && len(this.Pkgs) > 0 {
+		r.Is = lo.Contains(this.Pkgs, pkg)
 	}
-	if opt.Func != nil {
-		opt.Func(acname, r)
+
+	if r.Is && ask_func != nil {
+		ask_func(acname, this, r, opt)
+	}
+	if opt.func_ != nil {
+		opt.func_(acname, r)
 	}
 	return
 }
 
 type IIdentifierSwitchItem interface {
-	IsOpen(string, ...*option) (r *Result)
+	IsOpen(string, ...*Option_) (r *Result)
 }
 
 type IdentifierSwitchItem[T ISwitchItem] map[string]T // 一般是包分包
@@ -119,7 +127,7 @@ func (this *IdentifierSwitchItem[T]) String() string {
 	return fmt.Sprintf("%+v", *this)
 }
 
-func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*option) (r *Result) {
+func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	defer func() {
 		if r == nil {
 			r = &Result{
@@ -130,12 +138,12 @@ func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*option) (r *
 	if this == nil {
 		return
 	}
-	opt := Option().Merge(opts...)
+	opt := Option().merges(opts...)
 	var identifier string
-	if opt.Identifier != nil {
-		identifier = *opt.Identifier
+	if opt.identifier != nil {
+		identifier = *opt.identifier
 	} else {
-		identifier = default_key
+		identifier = default_key_identifier
 	}
 	if v, ok := (*this)[identifier]; ok {
 		r = v.IsOpen(acname, opts...)
@@ -143,13 +151,13 @@ func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*option) (r *
 	return
 }
 
-var rwl sync.RWMutex //protect under
-type Switch[T IIdentifierSwitchItem] map[string]T
+var rwl sync.RWMutex                               //protect under
+type switch_[T IIdentifierSwitchItem] map[string]T //加个下划线是因为switch是关键字
 
 /*
 返回配置的所有开关
 */
-func (this *Switch[T]) Open(opts ...*option) (m map[string]*Result) {
+func (this *switch_[T]) Open(opts ...*Option_) (m map[string]*Result) {
 	m = map[string]*Result{}
 	if this == nil {
 		return
@@ -186,7 +194,7 @@ func (this *Switch[T]) Open(opts ...*option) (m map[string]*Result) {
 /*
 acname 活动名称
 */
-func (this *Switch[T]) IsOpen(acname string, opts ...*option) (r *Result) {
+func (this *switch_[T]) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	rwl.RLock()
 	defer rwl.RUnlock()
 	defer func() {
@@ -205,8 +213,8 @@ func (this *Switch[T]) IsOpen(acname string, opts ...*option) (r *Result) {
 	return
 }
 
-func (this *Switch[T]) Load(buf []byte) (err error) {
-	var tmp Switch[T]
+func (this *switch_[T]) Load(buf []byte) (err error) {
+	var tmp switch_[T]
 	if err = yaml.Unmarshal(buf, &tmp); err != nil {
 		return
 	}

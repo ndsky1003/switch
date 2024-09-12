@@ -2,109 +2,134 @@ package Switch
 
 import "time"
 
-type option struct {
-	Identifier *string               // 用于指定使用哪一套配置, 默认为DefaultKey
-	Now        *time.Time            // 用于指定比较的时间
-	Pid        *int                  // 用于指定需要判定的Pid
-	Vip        *int                  // 用于指定需要判定的Pid
-	Pkg        *string               // 用于指定需要判定的Pkg
-	Func       func(string, *Result) // 所有的逻辑都走完了,再次可以修改结果
-	IsAsk      *bool                 // 用于指定是否需要询问
+type Option_ struct {
+	identifier *string               // 用于指定使用哪一套配置, 默认为DefaultKey
+	now        *time.Time            // 用于指定比较的时间
+	pid        *int                  // 用于指定需要判定的Pid
+	vip        *int                  // 用于指定需要判定的Pid
+	pkg        *string               // 用于指定需要判定的Pkg
+	func_      func(string, *Result) // 所有的逻辑都走完了,再次可以修改结果
 }
 
-func Option() *option {
-	return &option{}
+func Option() *Option_ {
+	return &Option_{}
 }
 
-func (this *option) SetPid(pid int) *option {
+func (this *Option_) SetPid(pid int) *Option_ {
 	if this == nil {
 		return nil
 	}
-	this.Pid = &pid
+	this.pid = &pid
 	return this
 }
+func (this *Option_) GetPid() int {
+	if this == nil || this.pid == nil {
+		return 0
+	}
+	return *this.pid
+}
 
-func (this *option) SetVip(vip int) *option {
+func (this *Option_) SetVip(vip int) *Option_ {
 	if this == nil {
 		return nil
 	}
-	this.Vip = &vip
+	this.vip = &vip
 	return this
 }
 
-func (this *option) SetNow(t time.Time) *option {
+func (this *Option_) GetVip() int {
+	if this == nil || this.vip == nil {
+		return 0
+	}
+	return *this.vip
+}
+
+func (this *Option_) SetNow(t time.Time) *Option_ {
 	if this == nil {
 		return nil
 	}
-	this.Now = &t
+	this.now = &t
 	return this
 }
 
-func (this *option) SetIsAsk(b bool) *option {
+func (this *Option_) GetNow() time.Time {
+	if this == nil || this.now == nil {
+		return time.Time{}
+	}
+	return *this.now
+}
+
+func (this *Option_) SetIdentifier(delta string) *Option_ {
 	if this == nil {
 		return nil
 	}
-	this.IsAsk = &b
+	this.identifier = &delta
 	return this
 }
 
-func (this *option) SetIdentifier(delta string) *option {
+func (this *Option_) GetIdentifier() string {
+	if this == nil || this.identifier == nil {
+		return ""
+	}
+	return *this.identifier
+}
+
+func (this *Option_) SetPkg(delta string) *Option_ {
 	if this == nil {
 		return nil
 	}
-	this.Identifier = &delta
+	this.pkg = &delta
 	return this
 }
 
-func (this *option) SetPkg(delta string) *option {
+func (this *Option_) GetPkg() string {
+	if this == nil || this.pkg == nil {
+		return ""
+	}
+	return *this.pkg
+}
+
+func (this *Option_) SetFunc(f func(string, *Result)) *Option_ {
 	if this == nil {
 		return nil
 	}
-	this.Pkg = &delta
+	this.func_ = f
 	return this
 }
 
-func (this *option) SetFunc(f func(string, *Result)) *option {
-	if this == nil {
-		return nil
-	}
-	this.Func = f
-	return this
-}
-
-func (this *option) merge(delta *option) *option {
+func (this *Option_) merge(delta *Option_) *Option_ {
 	if this == nil || delta == nil {
 		return this
 	}
 
-	if delta.Pid != nil {
-		this.Pid = delta.Pid
+	if delta.pid != nil {
+		this.pid = delta.pid
 	}
 
-	if delta.Vip != nil {
-		this.Vip = delta.Vip
+	if delta.vip != nil {
+		this.vip = delta.vip
 	}
 
-	if delta.Now != nil {
-		this.Now = delta.Now
-	}
-	if delta.IsAsk != nil {
-		this.IsAsk = delta.IsAsk
-	}
-	if delta.Identifier != nil {
-		this.Identifier = delta.Identifier
-	}
-	if delta.Pkg != nil {
-		this.Pkg = delta.Pkg
+	if delta.now != nil {
+		this.now = delta.now
 	}
 
-	if delta.Func != nil {
-		this.Func = delta.Func
+	if delta.identifier != nil {
+		this.identifier = delta.identifier
 	}
+
+	if delta.pkg != nil {
+		this.pkg = delta.pkg
+	}
+
+	if delta.func_ != nil {
+		this.func_ = delta.func_
+	}
+
 	return this
 }
 
-func (this *option) Merge(deltas ...*option) *option {
+func (this *Option_) merges(deltas ...*Option_) *Option_ {
 	if this == nil || deltas == nil {
 		return this
 	}

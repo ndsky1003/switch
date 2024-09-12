@@ -11,17 +11,17 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	SetAskFunc(func(acname string, r *Result, opt *option) {
+	SetAskFunc(func(acname string, r *Result, opt *Option_) {
 		fmt.Printf("ask: %s,%+v,%+v\n", acname, r, opt)
 		// r.Is = false
 	})
-	DefaultSwitch.Load(byte)
+	default_switch.Load(byte)
 	cde := m.Run()
 	os.Exit(cde)
 }
 
 func Test_test(t *testing.T) {
-	v := DefaultSwitch.IsOpen("cdkey", Option().SetPkg("SGC").SetPid(998).SetIsAsk(true).SetFunc(func(acname string, r *Result) {
+	v := default_switch.IsOpen("cdkey", Option().SetPkg("SGC").SetPid(998).SetFunc(func(acname string, r *Result) {
 		// r.Is = true
 	}))
 	t.Logf("%+v", v)

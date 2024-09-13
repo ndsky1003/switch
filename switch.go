@@ -84,6 +84,7 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	if opt.vip != nil {
 		vip = *opt.vip
 	}
+
 	if opt.pkg != nil {
 		pkg = *opt.pkg
 	}
@@ -108,9 +109,11 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	if r.Is && ask_func != nil {
 		ask_func(acname, this, r, opt)
 	}
+
 	if opt.func_ != nil {
 		opt.func_(acname, r)
 	}
+
 	return
 }
 
@@ -142,9 +145,12 @@ func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*Option_) (r 
 	var identifier string
 	if opt.identifier != nil {
 		identifier = *opt.identifier
-	} else {
+	}
+
+	if identifier == "" {
 		identifier = default_key_identifier
 	}
+
 	if v, ok := (*this)[identifier]; ok {
 		r = v.IsOpen(acname, opts...)
 	}

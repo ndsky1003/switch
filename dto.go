@@ -2,14 +2,10 @@ package Switch
 
 import "fmt"
 
-// type Result1 struct {
-// 	Is    bool
-// 	Value any
-// }
-
 type Result struct {
-	Meta map[string]any `json:"Meta"`
-	Is   bool           `json:"Is"`
+	Meta  map[string]any `json:"Meta"`
+	Value any            `json:"Value"`
+	Is    bool           `json:"Is"` //是否开启
 }
 
 func (this *Result) String() string {

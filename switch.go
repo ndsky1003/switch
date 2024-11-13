@@ -11,14 +11,15 @@ import (
 
 var (
 	default_key_identifier = "default"
-	default_key_sarttime   = "Start"
-	default_key_endtime    = "End"
+	default_key_open       = ""
+	default_key_sarttime   = ""
+	default_key_endtime    = ""
 )
 
-var ask_func func(string, ISwitchItem, *Result, *Option_)
+var ask_func func(string, ISwitchItem, *Result, *Option)
 
 type ISwitchItem interface {
-	IsOpen(acname string, opts ...*Option_) (r *Result)
+	IsOpen(acname string, opts ...*Option) (r *Result)
 }
 
 type SwithItem struct {
@@ -30,6 +31,7 @@ type SwithItem struct {
 	Vips      []int          `yaml:"Vips"`
 	PidTails  []int          `yaml:"PidTails"` // 玩家ID尾号设计
 	Pkgs      []string       `yaml:"Pkgs"`     // 玩家包过滤设计
+	Channels  []string       `yaml:"Channels"` // 玩家渠道过滤设计
 	Meta      map[string]any `yaml:"Meta"`     // 配置里的字段，可以写死一些数据，但是默认指定字段Value作为调用返回值
 	Server    string         `yaml:"Server"`
 	Module    string         `yaml:"Module"`
@@ -43,7 +45,7 @@ func (this *SwithItem) String() string {
 	return fmt.Sprintf("%+v", *this)
 }
 
-func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
+func (this *SwithItem) IsOpen(acname string, opts ...*Option) (r *Result) {
 	r = &Result{
 		Is: true,
 	}
@@ -54,9 +56,12 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	if r.Meta == nil {
 		r.Meta = map[string]any{}
 	}
-	opt := Option().merges(opts...)
+	opt := Options().merges(opts...)
 
 	r.Is = this.Open
+	if default_key_open != "" {
+		r.Meta[default_key_open] = this.Open
+	}
 	var now time.Time
 	if opt.now != nil {
 		now = *opt.now
@@ -67,11 +72,15 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
 	if r.Is {
 		if r.Is && !this.StartTime.IsZero() {
 			r.Is = this.StartTime.Before(now)
-			r.Meta[default_key_sarttime] = this.StartTime
+			if default_key_sarttime != "" {
+				r.Meta[default_key_sarttime] = this.StartTime
+			}
 		}
 		if r.Is && !this.EndTime.IsZero() {
 			r.Is = this.EndTime.After(now)
-			r.Meta[default_key_endtime] = this.EndTime
+			if default_key_endtime != "" {
+				r.Meta[default_key_endtime] = this.EndTime
+			}
 		}
 	}
 
@@ -106,19 +115,23 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option_) (r *Result) {
 		r.Is = lo.Contains(this.Pkgs, pkg)
 	}
 
+	if r.Is && len(this.Channels) > 0 {
+		r.Is = lo.Contains(this.Channels, opt.GetChannel())
+	}
+
 	if r.Is && ask_func != nil {
 		ask_func(acname, this, r, opt)
 	}
 
-	if opt.func_ != nil {
-		opt.func_(acname, r)
+	if opt.fix_func_finally != nil {
+		opt.fix_func_finally(acname, r)
 	}
 
 	return
 }
 
 type IIdentifierSwitchItem interface {
-	IsOpen(string, ...*Option_) (r *Result)
+	IsOpen(string, ...*Option) (r *Result)
 }
 
 type IdentifierSwitchItem[T ISwitchItem] map[string]T // 一般是包分包
@@ -130,7 +143,7 @@ func (this *IdentifierSwitchItem[T]) String() string {
 	return fmt.Sprintf("%+v", *this)
 }
 
-func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*Option_) (r *Result) {
+func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*Option) (r *Result) {
 	defer func() {
 		if r == nil {
 			r = &Result{
@@ -141,7 +154,7 @@ func (this *IdentifierSwitchItem[T]) IsOpen(acname string, opts ...*Option_) (r 
 	if this == nil {
 		return
 	}
-	opt := Option().merges(opts...)
+	opt := Options().merges(opts...)
 	var identifier string
 	if opt.identifier != nil {
 		identifier = *opt.identifier
@@ -163,7 +176,7 @@ type switch_[T IIdentifierSwitchItem] map[string]T //加个下划线是因为swi
 /*
 返回配置的所有开关
 */
-func (this *switch_[T]) Open(opts ...*Option_) (m map[string]*Result) {
+func (this *switch_[T]) Open(opts ...*Option) (m map[string]*Result) {
 	m = map[string]*Result{}
 	if this == nil {
 		return
@@ -200,7 +213,7 @@ func (this *switch_[T]) Open(opts ...*Option_) (m map[string]*Result) {
 /*
 acname 活动名称
 */
-func (this *switch_[T]) IsOpen(acname string, opts ...*Option_) (r *Result) {
+func (this *switch_[T]) IsOpen(acname string, opts ...*Option) (r *Result) {
 	rwl.RLock()
 	defer rwl.RUnlock()
 	defer func() {

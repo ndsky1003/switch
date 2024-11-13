@@ -27,14 +27,15 @@ func Load([]byte) error
 
 #### 配置文件
 ```yaml
-pingfen: # 活动名称
+activity1: # 活动名称
     default: #指定用哪一套配置
         Open: true #是否开启
         StartTime: 2023-07-14T17:00:00.000Z #开始时间, 为空表示不限制
         EndTime: 2023-07-31T17:00:00.000Z #结束时间, 为空表示不限制
         Pids: # 限制访问的进程pid, 为空表示不限制
         PidTails: # 限制访问的pid尾号, 为空表示不限制
-        Pkgs: # 限制访问的软件包, 为空表示不限制
+        Pkgs: # 限制访问的包, 为空表示不限制
+        Channels: # 限制访问的渠道, 为空表示不限制
         Vips: #限制访问的vip, 为空表示不限制
         Meta: null #透传一些元数据
         Server: "" #如果有远程询问,指定询问的服务

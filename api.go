@@ -16,7 +16,7 @@ func SetDefaultKeyEndTime(key string) {
 }
 
 // SetAskFunc 设置询问函数,包括远程rpc调用就在这里
-func SetAskFunc(f func(string, ISwitchItem, *Result, *Option_)) {
+func SetAskFunc(f func(string, ISwitchItem, *Result, *Option)) {
 	ask_func = f
 }
 
@@ -26,12 +26,12 @@ func SetDefaultSwitch(s ISwitch) {
 }
 
 // 配置的所有开关
-func Open(opts ...*Option_) (m map[string]*Result) {
+func Open(opts ...*Option) (m map[string]*Result) {
 	return default_switch.Open(opts...)
 }
 
 // 单个模块的开关情况
-func IsOpen(acname string, opts ...*Option_) (r *Result) {
+func IsOpen(acname string, opts ...*Option) (r *Result) {
 	return default_switch.IsOpen(acname, opts...)
 }
 

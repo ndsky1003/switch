@@ -3,13 +3,14 @@ package Switch
 import "time"
 
 type Option struct {
-	identifier       *string               // 用于指定使用哪一套配置, 默认为DefaultKey
-	now              *time.Time            // 用于指定比较的时间
-	pid              *int                  // 用于指定需要判定的Pid
-	vip              *int                  // 用于指定需要判定的Pid
-	pkg              *string               // 用于指定需要判定的Pkg
-	channel          *string               // 用于指定需要判定的channel
-	fix_func_finally func(string, *Result) // 所有的逻辑都走完了,对最终结果的修正
+	identifier              *string               // 用于指定使用哪一套配置, 默认为DefaultKey
+	now                     *time.Time            // 用于指定比较的时间
+	pid                     *int                  // 用于指定需要判定的Pid
+	vip                     *int                  // 用于指定需要判定的Pid
+	pkg                     *string               // 用于指定需要判定的Pkg
+	channel                 *string               // 用于指定需要判定的channel
+	fix_finally_result_func func(string, *Result) // 所有的逻辑都走完了,对最终结果的修正
+	fix_rpc_req_func        func(any)             // 当已经存在的属性不足以支持rpc请求时,可以通过这个函数来补充
 }
 
 func Options() *Option {
@@ -105,12 +106,28 @@ func (this *Option) GetChannel() string {
 	return *this.channel
 }
 
-func (this *Option) SetFunc(f func(string, *Result)) *Option {
+// 修复最终结果
+func (this *Option) SetFixResultFunc(f func(string, *Result)) *Option {
 	if this == nil {
 		return nil
 	}
-	this.fix_func_finally = f
+	this.fix_finally_result_func = f
 	return this
+}
+
+func (this *Option) SetFixRpcReqFunc(f func(any)) *Option {
+	if this == nil {
+		return nil
+	}
+	this.fix_rpc_req_func = f
+	return this
+}
+
+func (this *Option) GetFixRpcReqFunc() func(any) {
+	if this == nil {
+		return nil
+	}
+	return this.fix_rpc_req_func
 }
 
 func (this *Option) merge(delta *Option) *Option {
@@ -142,8 +159,12 @@ func (this *Option) merge(delta *Option) *Option {
 		this.channel = delta.channel
 	}
 
-	if delta.fix_func_finally != nil {
-		this.fix_func_finally = delta.fix_func_finally
+	if delta.fix_finally_result_func != nil {
+		this.fix_finally_result_func = delta.fix_finally_result_func
+	}
+
+	if delta.fix_rpc_req_func != nil {
+		this.fix_rpc_req_func = delta.fix_rpc_req_func
 	}
 
 	return this

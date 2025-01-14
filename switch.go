@@ -123,8 +123,8 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option) (r *Result) {
 		ask_func(acname, this, r, opt)
 	}
 
-	if opt.fix_func_finally != nil {
-		opt.fix_func_finally(acname, r)
+	if opt.fix_finally_result_func != nil {
+		opt.fix_finally_result_func(acname, r)
 	}
 
 	return

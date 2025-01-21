@@ -9,6 +9,7 @@ type Option struct {
 	vip                     *int                  // 用于指定需要判定的Pid
 	pkg                     *string               // 用于指定需要判定的Pkg
 	channel                 *string               // 用于指定需要判定的channel
+	is_call_rpc             *bool                 // 是否需要调用rpc,默认为true
 	fix_finally_result_func func(string, *Result) // 所有的逻辑都走完了,对最终结果的修正
 	fix_rpc_req_func        func(any)             // 当已经存在的属性不足以支持rpc请求时,可以通过这个函数来补充
 }
@@ -128,6 +129,18 @@ func (this *Option) GetFixRpcReqFunc() func(any) {
 		return nil
 	}
 	return this.fix_rpc_req_func
+}
+
+func (this *Option) GetIsCallRpc() bool {
+	return this == nil || this.is_call_rpc == nil || *this.is_call_rpc
+}
+
+func (this *Option) SetIsCallRpc(b bool) *Option {
+	if this == nil {
+		return nil
+	}
+	this.is_call_rpc = &b
+	return this
 }
 
 func (this *Option) merge(delta *Option) *Option {

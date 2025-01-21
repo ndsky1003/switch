@@ -119,7 +119,7 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option) (r *Result) {
 		r.Is = lo.Contains(this.Channels, opt.GetChannel())
 	}
 
-	if r.Is && ask_func != nil {
+	if r.Is && opt.GetIsCallRpc() && ask_func != nil {
 		ask_func(acname, this, r, opt)
 	}
 

@@ -172,6 +172,10 @@ func (this *Option) merge(delta *Option) *Option {
 		this.channel = delta.channel
 	}
 
+	if delta.is_call_rpc != nil {
+		this.is_call_rpc = delta.is_call_rpc
+	}
+
 	if delta.fix_finally_result_func != nil {
 		this.fix_finally_result_func = delta.fix_finally_result_func
 	}

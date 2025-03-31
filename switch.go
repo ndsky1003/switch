@@ -62,12 +62,11 @@ func (this *SwithItem) IsOpen(acname string, opts ...*Option) (r *Result) {
 	if default_key_open != "" {
 		r.Meta[default_key_open] = this.Open
 	}
-	var now time.Time
-	if opt.now != nil {
-		now = *opt.now
-	} else {
-		now = time.Now()
+	if opt.now == nil || opt.now.IsZero() {
+		opt.SetNow(time.Now())
 	}
+
+	now := *opt.now
 
 	if r.Is {
 		if r.Is && !this.StartTime.IsZero() {
